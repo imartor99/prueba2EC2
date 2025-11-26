@@ -1,0 +1,23 @@
+{
+  "name": "proyecto-lista-libros-ci",
+  "version": "1.0.0",
+  "description": "Aplicación web para gestionar una lista de libros.",
+  "main": "js/main6.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "docs": "jsdoc -c jsdoc.json",
+    "start": "node js/main6.js"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "testMatch": [
+      "**/__tests__/**/*.test.js"
+    ]
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "jsdoc": "^4.0.5",
+    "jest-environment-jsdom": "^30.2.0"
+  }
+}
