@@ -1,0 +1,78 @@
+name: CI/CD - Despliegue de Lista de Libros
+
+on:
+  push:
+    branches:
+      - develop # El workflow se activa con cada push a la rama develop
+
+jobs:
+  test:
+    name: 🧪 Pruebas Unitarias (CI)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies (npm ci)
+        # Instala dependencias (Jest y JSDoc)
+        run: npm ci 
+
+      - name: Run unit tests
+        # Ejecuta el script 'test' que configuramos para Jest
+        run: npm test
+
+  docs:
+    name: 📝 Generar Documentación (JSDoc)
+    runs-on: ubuntu-latest
+    needs: test # Solo se ejecuta si las pruebas unitarias pasan
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies (npm ci)
+        # Necesitamos instalar dependencias de nuevo en este runner
+        run: npm ci 
+
+      - name: Generate JSDoc documentation
+        # Llama al script 'docs' en package.json (asumiendo que es: "docs": "jsdoc -c jsdoc.json" o similar)
+        run: npm run docs
+        
+      # Opcional: Si quieres guardar la documentación generada como un artefacto:
+      #- name: Upload Documentation Artifact
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: jsdoc-html-docs
+      #    path: docs/ # Asume que jsdoc genera archivos en una carpeta llamada 'docs'
+
+  deploy:
+    name: 🚀 Despliegue a AWS EC2 (CD)
+    runs-on: ubuntu-latest
+    needs: [test, docs] # Se ejecuta solo si las pruebas Y la documentación pasan
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: 'placeholder'
+          
+      - name: Deploy with rsync
+        run: |
+          echo "Conectando a ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ${{ secrets.EC2_TARGET_DIR }}"
+          rsync -avz --exclude '.git' --exclude 'node_modules' --delete ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ secrets.EC2_TARGET_DIR }}
