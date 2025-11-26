@@ -3,7 +3,7 @@ import { BookList } from "../js/booklist.js";
 
 describe('BookList Core Functionality', () => {
     let myBookList;
-    let book1, book2, book3;
+    let book1, book2;
 
     beforeEach(() => {
         // 1. Inicializa libros
